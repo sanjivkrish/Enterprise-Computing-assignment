@@ -125,4 +125,28 @@ router.put('/pizza/:pizzaId', (req, res) => {
   }
 });
 
+//
+// Delete pizza by ID
+//
+router.delete('/pizza/:pizzaId', (req, res) => {
+  var isPizzaFound = false;
+  var index = 0;
+
+  for (index = 0; index < pizzaList.length; index++) {
+    if (pizzaList[index].id == req.params.pizzaId) {
+      isPizzaFound = true;
+      break;
+    }
+  }
+
+  if (isPizzaFound) {
+    // Pizza found
+    pizzaList.splice(index, 1);
+    res.status(204).send('Deleted');
+  } else {
+    // No pizza found
+    res.status(404).send('Pizza not found');
+  }
+});
+
 module.exports = router;
