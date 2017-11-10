@@ -49,7 +49,7 @@ router.post('/pizza', (req, res) => {
         // Add pizza to an existing list
         if (isValidPizza) {
           pizzaList.push(pizza);
-          toppingList.push(null);
+          toppingList.push([]);
           res.status(201).send('Created new pizza');
         }
 
@@ -180,11 +180,75 @@ router.post('/pizza/:pizzaId/topping', (req, res) => {
     if (topping.hasOwnProperty('id') &&
         topping.hasOwnProperty('name') &&
         topping.hasOwnProperty('price')) {
-          toppingList[index] = topping;
+          toppingList[index].push(topping);
           res.status(204).send('Created new Topping for pizza');
     } else {
       // parameter missing
       res.status(400).send('Invalid input');
+    }
+  } else {
+    // No pizza found
+    res.status(404).send('Pizza not found');
+  }
+});
+
+//
+// Get toppings of a pizza by ID
+//
+router.get('/pizza/:pizzaId/topping', (req, res) => {
+  var isPizzaFound = false;
+  var index = 0;
+
+  for (index = 0; index < pizzaList.length; index++) {
+    if (pizzaList[index].id == req.params.pizzaId) {
+      isPizzaFound = true;
+      break;
+    }
+  }
+
+  if (isPizzaFound) {
+    console.log(toppingList);
+    // Pizza found
+    if (toppingList[index].length === 0) {
+      res.status(400).send('No toppings found');
+    } else {
+      res.status(200).send(toppingList);
+    }
+  } else {
+    // No pizza found
+    res.status(404).send('Pizza not found');
+  }
+});
+
+
+//
+// Get toppings of a pizza by ID (including toppingsId)
+//
+router.get('/pizza/:pizzaId/topping/:toppingId', (req, res) => {
+  var isPizzaFound = false;
+  var index = 0;
+
+  for (index = 0; index < pizzaList.length; index++) {
+    if (pizzaList[index].id == req.params.pizzaId) {
+      isPizzaFound = true;
+      break;
+    }
+  }
+
+  if (isPizzaFound) {
+    // Pizza found
+    var isToppingFound = false;
+
+    for (var i = 0; i < toppingList[index].length; i++) {
+      if (toppingList[index][i].id == req.params.toppingId) {
+        isToppingFound = true;
+        res.status(200).send(toppingList[index][i]);
+        break;
+      }
+    }
+
+    if (!isToppingFound) {
+      res.status(404).send('No toppings found with that ID');
     }
   } else {
     // No pizza found
