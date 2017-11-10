@@ -6,6 +6,11 @@ const router = express.Router();
 //
 var pizzaList = [];
 
+//
+// Object to store toppings of each pizza
+//
+var toppingList = [];
+
 /* GET home page. */
 router.get('/', (req, res) => {
   res.render('index', { title: 'Express' });
@@ -44,6 +49,7 @@ router.post('/pizza', (req, res) => {
         // Add pizza to an existing list
         if (isValidPizza) {
           pizzaList.push(pizza);
+          toppingList.push(null);
           res.status(201).send('Created new pizza');
         }
 
@@ -142,7 +148,44 @@ router.delete('/pizza/:pizzaId', (req, res) => {
   if (isPizzaFound) {
     // Pizza found
     pizzaList.splice(index, 1);
+
+    // Remove toppings
+    toppingList.splice(index, 1);
+
     res.status(204).send('Deleted');
+  } else {
+    // No pizza found
+    res.status(404).send('Pizza not found');
+  }
+});
+
+//
+// Add toppings
+//
+router.post('/pizza/:pizzaId/topping', (req, res) => {
+  var isPizzaFound = false;
+  var index = 0;
+
+  for (index = 0; index < pizzaList.length; index++) {
+    if (pizzaList[index].id == req.params.pizzaId) {
+      isPizzaFound = true;
+      break;
+    }
+  }
+
+  if (isPizzaFound) {
+    // Pizza found
+    var topping = req.body;
+
+    if (topping.hasOwnProperty('id') &&
+        topping.hasOwnProperty('name') &&
+        topping.hasOwnProperty('price')) {
+          toppingList[index] = topping;
+          res.status(204).send('Created new Topping for pizza');
+    } else {
+      // parameter missing
+      res.status(400).send('Invalid input');
+    }
   } else {
     // No pizza found
     res.status(404).send('Pizza not found');
