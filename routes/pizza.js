@@ -352,11 +352,48 @@ router.get('/order', (req, res) => {
 // Get pizza list by id
 //
 router.get('/order/:orderId', (req, res) => {
-  if (orderList.length === 0) {
-    // No pizzas
-    res.status(404).send('No orders found');
+  var isOrderFound = false;
+  var index = 0;
+
+  for (index = 0; index < orderList.length; index++) {
+    if (orderList[index].id == req.params.orderId) {
+      isOrderFound = true;
+      break;
+    }
+  }
+
+  if (isOrderFound) {
+    // Delete order
+    res.status(200).send(orderList[index]);
   } else {
-    res.status(200).send(orderList);
+    // No order found
+    res.status(404).send('Order not found');
+  }
+});
+
+//
+// Delete toppings of a pizza by ID (including toppingsId)
+//
+router.delete('/order/:orderId', (req, res) => {
+  var isOrderFound = false;
+  var index = 0;
+
+  for (index = 0; index < orderList.length; index++) {
+    if (orderList[index].id == req.params.orderId) {
+      isOrderFound = true;
+      break;
+    }
+  }
+
+  if (isOrderFound) {
+    // Remove order
+    orderList.splice(index, 1);
+
+    // Delete order
+    res.status(204).send('Deleteion successful');
+  } else {
+    // No order found
+    res.status(404).send('Order not found');
   }
 });
 
