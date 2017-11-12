@@ -11,6 +11,15 @@ var pizzaList = [];
 //
 var toppingList = [];
 
+//
+// Object to store orders
+//
+var orderList = [];
+
+var orderID = 1;
+var pizzaID = 1;
+var toppingID = 1;
+
 /* GET home page. */
 router.get('/', (req, res) => {
   res.render('index', { title: 'Express' });
@@ -22,12 +31,13 @@ router.post('/pizza', (req, res) => {
   //
   // Parameter validation
   //
-  if (pizza.hasOwnProperty('id') &&
-      pizza.hasOwnProperty('name') &&
+  if (pizza.hasOwnProperty('name') &&
       pizza.hasOwnProperty('size') &&
       pizza.hasOwnProperty('price')) {
 
         var isValidPizza = true;
+        pizza.id = pizzaID;
+        pizzaID += 1;
 
         // Check for duplicate entries
         for (var i = 0; i < pizzaList.length; i++) {
@@ -177,9 +187,11 @@ router.post('/pizza/:pizzaId/topping', (req, res) => {
     // Pizza found
     var topping = req.body;
 
-    if (topping.hasOwnProperty('id') &&
-        topping.hasOwnProperty('name') &&
+    if (topping.hasOwnProperty('name') &&
         topping.hasOwnProperty('price')) {
+          topping.id = toppingID;
+          toppingID += 1;
+
           toppingList[index].push(topping);
           res.status(204).send('Created new Topping for pizza');
     } else {
@@ -294,5 +306,35 @@ router.delete('/pizza/:pizzaId/topping/:toppingId', (req, res) => {
     res.status(404).send('Pizza not found');
   }
 });
+
+//
+// Delete toppings of a pizza by ID (including toppingsId)
+//
+router.post('/order', (req, res) => {
+  var order = req.body;
+
+  //
+  // Parameter validation
+  //
+  if (order.hasOwnProperty('orderItems') &&
+      order.hasOwnProperty('recipient')) {
+
+        // assign ID
+        order.id = orderID;
+        orderID += 1;
+
+        // Calculat total price
+        order.totalPrice = 0;
+
+        orderList.push(order);
+
+        res.status(201).send('Created new order');
+
+  } else {
+    // parameter missing
+    res.status(400).send('Invalid order');
+  }
+});
+
 
 module.exports = router;
