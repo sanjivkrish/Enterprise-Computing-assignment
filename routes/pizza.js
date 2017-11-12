@@ -256,4 +256,43 @@ router.get('/pizza/:pizzaId/topping/:toppingId', (req, res) => {
   }
 });
 
+//
+// Delete toppings of a pizza by ID (including toppingsId)
+//
+router.delete('/pizza/:pizzaId/topping/:toppingId', (req, res) => {
+  var isPizzaFound = false;
+  var index = 0;
+
+  for (index = 0; index < pizzaList.length; index++) {
+    if (pizzaList[index].id == req.params.pizzaId) {
+      isPizzaFound = true;
+      break;
+    }
+  }
+
+  if (isPizzaFound) {
+    // Pizza found
+    var isToppingFound = false;
+
+    for (var i = 0; i < toppingList[index].length; i++) {
+      if (toppingList[index][i].id == req.params.toppingId) {
+        isToppingFound = true;
+
+        // Delete topping
+        toppingList[index].splice(i, 1);
+
+        res.status(204).send('Deleted');
+        break;
+      }
+    }
+
+    if (!isToppingFound) {
+      res.status(404).send('No toppings found with that ID');
+    }
+  } else {
+    // No pizza found
+    res.status(404).send('Pizza not found');
+  }
+});
+
 module.exports = router;
