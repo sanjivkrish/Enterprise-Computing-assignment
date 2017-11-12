@@ -336,5 +336,17 @@ router.post('/order', (req, res) => {
   }
 });
 
+//
+// Get pizza list
+//
+router.get('/order', (req, res) => {
+  if (orderList.length === 0) {
+    // No pizzas
+    res.status(404).send('No orders found');
+  } else {
+    res.status(200).send(orderList);
+  }
+});
+
 
 module.exports = router;
