@@ -33,7 +33,8 @@ router.post('/pizza', (req, res) => {
   //
   if (pizza.hasOwnProperty('name') &&
       pizza.hasOwnProperty('size') &&
-      pizza.hasOwnProperty('price')) {
+      pizza.hasOwnProperty('price') &&
+      typeof(pizza.price) == 'number') {
 
         var isValidPizza = true;
         pizza.id = pizzaID;
@@ -44,6 +45,7 @@ router.post('/pizza', (req, res) => {
           // Duplicate ID
           if (pizzaList[i].id == pizza.id) {
             isValidPizza = false;
+            pizzaID -= 1;
             res.status(400).send('Pizza with same ID already exists');
             break;
           }
@@ -51,6 +53,7 @@ router.post('/pizza', (req, res) => {
           // Duplicate Name
           if (pizzaList[i].name == pizza.name) {
             isValidPizza = false;
+            pizzaID -= 1;
             res.status(400).send('Pizza with same Name already exists');
             break;
           }
@@ -60,6 +63,9 @@ router.post('/pizza', (req, res) => {
         if (isValidPizza) {
           pizzaList.push(pizza);
           toppingList.push([]);
+
+          // Set location in the header
+          res.location(req.headers.host + req.url + '/' + pizza.id);
           res.status(201).send('Created new pizza');
         }
 
@@ -77,7 +83,13 @@ router.get('/pizza', (req, res) => {
     // No pizzas
     res.status(404).send('No pizzas exists');
   } else {
-    res.status(200).send(pizzaList);
+    var idList = [];
+
+    for (var i = 0; i < pizzaList.length; i++) {
+      idList.push(pizzaList[i].id);
+    }
+
+    res.status(200).send(idList);
   }
 });
 
@@ -125,10 +137,10 @@ router.put('/pizza/:pizzaId', (req, res) => {
     //
     // Parameter validation
     //
-    if (pizza.hasOwnProperty('id') &&
-        pizza.hasOwnProperty('name') &&
+    if (pizza.hasOwnProperty('name') &&
         pizza.hasOwnProperty('size') &&
-        pizza.hasOwnProperty('price')) {
+        pizza.hasOwnProperty('price') &&
+        typeof(pizza.price) == 'number') {
           pizzaList[index] = pizza;
           res.status(204).send('Update Okey');
     } else {
@@ -188,12 +200,15 @@ router.post('/pizza/:pizzaId/topping', (req, res) => {
     var topping = req.body;
 
     if (topping.hasOwnProperty('name') &&
-        topping.hasOwnProperty('price')) {
-          topping.id = toppingID;
-          toppingID += 1;
+        topping.hasOwnProperty('price') &&
+        typeof(topping.price) == 'number') {
+          topping.id = toppingList[index].length + 1;
 
           toppingList[index].push(topping);
-          res.status(204).send('Created new Topping for pizza');
+
+          // Set location in the header
+          res.location(req.headers.host + req.url + '/' + topping.id);
+          res.status(201).send('Created new Topping for pizza');
     } else {
       // parameter missing
       res.status(400).send('Invalid input');
@@ -219,19 +234,23 @@ router.get('/pizza/:pizzaId/topping', (req, res) => {
   }
 
   if (isPizzaFound) {
-    console.log(toppingList);
     // Pizza found
     if (toppingList[index].length === 0) {
       res.status(400).send('No toppings found');
     } else {
-      res.status(200).send(toppingList);
+      var idList = [];
+
+      for (var i = 0; i < toppingList.length; i++) {
+        idList.push(toppingList[index][i].id);
+      }
+
+      res.status(200).send(idList);
     }
   } else {
     // No pizza found
-    res.status(404).send('Pizza not found');
+    res.status(404).send('Specified pizza id not found');
   }
 });
-
 
 //
 // Get toppings of a pizza by ID (including toppingsId)
@@ -317,7 +336,9 @@ router.post('/order', (req, res) => {
   // Parameter validation
   //
   if (order.hasOwnProperty('orderItems') &&
-      order.hasOwnProperty('recipient')) {
+      typeof(order.orderItems) == 'object' &&
+      order.hasOwnProperty('recipient') &&
+      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(order.recipient)) {
 
         // assign ID
         order.id = orderID;
@@ -326,9 +347,47 @@ router.post('/order', (req, res) => {
         // Calculat total price
         order.totalPrice = 0;
 
-        orderList.push(order);
+        var isValidOrder = true;
 
-        res.status(201).send('Created new order');
+        for (var i = 0; i < order.orderItems.length; i++) {
+          var inputID = order.orderItems[i].pizzaId;
+
+          for (var index = 0; index < pizzaList.length; index++) {
+            if (pizzaList[index].id == inputID) {
+              break;
+            }
+          }
+
+          if (index == pizzaList.length) {
+            isValidOrder = false;
+            orderID -= 1;
+          } else {
+            var pizzaPrice = 0;
+            pizzaPrice += pizzaList[index].price;
+
+            for (var j = 0; j < toppingList[index].length; j++) {
+              pizzaPrice += toppingList[index][j].price;
+            }
+
+            if (order.orderItems[i].hasOwnProperty('quantity')) {
+              order.totalPrice += (pizzaPrice * order.orderItems[i].quantity);
+            } else {
+              isValidOrder = false;
+              orderID -= 1;
+            }
+          }
+        }
+
+        if (isValidOrder) {
+          orderList.push(order);
+
+          // Set location in the header
+          res.location(req.headers.host + req.url + '/' + order.id);
+          res.status(201).send('Created new order');
+        } else {
+          // parameter invalid
+          res.status(400).send('Invalid pizza ID');
+        }
 
   } else {
     // parameter missing
@@ -344,7 +403,13 @@ router.get('/order', (req, res) => {
     // No pizzas
     res.status(404).send('No orders found');
   } else {
-    res.status(200).send(orderList);
+    var idList = [];
+
+    for (var i = 0; i < orderList.length; i++) {
+      idList.push(orderList[i].id);
+    }
+
+    res.status(200).send(idList);
   }
 });
 
