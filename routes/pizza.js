@@ -84,7 +84,7 @@ router.post('/pizza', (req, res) => {
           toppingList.push([]);
 
           // Set location in the header
-          res.location(req.headers.host + '/v1' + req.url + pizza.id);
+          res.location(req.headers.host + '/v1/pizza/' + pizza.id);
           res.status(201).send('Created new pizza');
         }
 
@@ -160,14 +160,14 @@ router.put('/pizza/:pizzaId', (req, res) => {
         pizza.hasOwnProperty('price') &&
         typeof(pizza.price) == 'number') {
           pizzaList[index] = pizza;
-          res.status(204).send('Update Okey');
+          res.status(204).send('Update Okay');
     } else {
       // parameter missing
       res.status(400).send('Invalid pizza supplied');
     }
   } else {
     // No pizza found
-    res.status(404).send('Pizza could not be found');
+    res.status(404).send('Pizza not found');
   }
 });
 
@@ -192,7 +192,7 @@ router.delete('/pizza/:pizzaId', (req, res) => {
     // Remove toppings
     toppingList.splice(index, 1);
 
-    res.status(204).send('Deleted');
+    res.status(204).send('deleted');
   } else {
     // No pizza found
     res.status(404).send('Pizza not found');
@@ -232,7 +232,7 @@ router.post('/pizza/:pizzaId/topping', (req, res) => {
           pizzaList[index].price += topping.price;
 
           // Set location in the header
-          res.location(req.headers.host + '/v1' + req.url + topping.id);
+          res.location(req.headers.host + '/v1/pizza/' + req.params.pizzaId  + '/topping/' + topping.id);
           res.status(201).send('Created new Topping for pizza');
     } else {
       // parameter missing
@@ -304,11 +304,11 @@ router.get('/pizza/:pizzaId/topping/:toppingId', (req, res) => {
     }
 
     if (!isToppingFound) {
-      res.status(404).send('No toppings found with that ID');
+      res.status(404).send('Pizza or Topping not found');
     }
   } else {
     // No pizza found
-    res.status(404).send('Pizza not found');
+    res.status(404).send('Pizza or Topping not found');
   }
 });
 
@@ -344,11 +344,11 @@ router.delete('/pizza/:pizzaId/topping/:toppingId', (req, res) => {
     }
 
     if (!isToppingFound) {
-      res.status(404).send('No toppings found with that ID');
+      res.status(404).send('Pizza or Topping not found');
     }
   } else {
     // No pizza found
-    res.status(404).send('Pizza not found');
+    res.status(404).send('Pizza or Topping not found');
   }
 });
 
@@ -407,7 +407,7 @@ router.post('/order', (req, res) => {
           orderList.push(order);
 
           // Set location in the header
-          res.location(req.headers.host + '/v1' + req.url + order.id);
+          res.location(req.headers.host + '/v1/order/' + order.id);
           res.status(201).send('Created new order');
         } else {
           // parameter invalid
@@ -480,7 +480,7 @@ router.delete('/order/:orderId', (req, res) => {
     orderList.splice(index, 1);
 
     // Delete order
-    res.status(204).send('Deleteion successful');
+    res.status(204).send('Deletion successful');
   } else {
     // No order found
     res.status(404).send('Order not found');
