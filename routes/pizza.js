@@ -16,14 +16,28 @@ var toppingList = [];
 //
 var orderList = [];
 
-var orderID = 1;
-var pizzaID = 1;
-var toppingID = 1;
+var orderID = 101;
+var pizzaID = 101;
+var toppingID = 101;
 
-/* GET home page. */
-router.get('/', (req, res) => {
-  res.render('index', { title: 'Express' });
-});
+// Check ID
+var isIdExists = function (id, list) {
+  var isIdFound = false;
+
+  for (var index = 0; index < list.length; index++) {
+    if (list[index].id == id) {
+      isIdFound = true;
+      break
+    }
+  }
+
+  if (isIdFound) {
+    return true;
+  } else {
+    return false;
+  }
+
+};
 
 router.post('/pizza', (req, res) => {
   var pizza = req.body;
@@ -34,11 +48,16 @@ router.post('/pizza', (req, res) => {
   if (pizza.hasOwnProperty('name') &&
       pizza.hasOwnProperty('size') &&
       pizza.hasOwnProperty('price') &&
-      typeof(pizza.price) == 'number') {
+      typeof(pizza.price) == 'number' &&
+      (pizza.price > 0)) {
 
         var isValidPizza = true;
-        pizza.id = pizzaID;
-        pizzaID += 1;
+
+        if (!(pizza.hasOwnProperty('id') && typeof(pizza.id) == 'number'
+            && !(isIdExists(pizza.id, pizzaList)))) {
+          pizza.id = pizzaID;
+          pizzaID += 1;
+        }
 
         // Check for duplicate entries
         for (var i = 0; i < pizzaList.length; i++) {
@@ -65,7 +84,7 @@ router.post('/pizza', (req, res) => {
           toppingList.push([]);
 
           // Set location in the header
-          res.location(req.headers.host + req.url + '/' + pizza.id);
+          res.location(req.headers.host + '/v1' + req.url + pizza.id);
           res.status(201).send('Created new pizza');
         }
 
@@ -120,20 +139,19 @@ router.get('/pizza/:pizzaId', (req, res) => {
 // Update pizza by ID
 //
 router.put('/pizza/:pizzaId', (req, res) => {
+  var pizza = req.body;
   var isPizzaFound = false;
   var index = 0;
 
   for (index = 0; index < pizzaList.length; index++) {
     if (pizzaList[index].id == req.params.pizzaId) {
+      pizza.id = pizzaList[index].id;
       isPizzaFound = true;
       break;
     }
   }
 
   if (isPizzaFound) {
-    // Pizza found
-    var pizza = req.body;
-
     //
     // Parameter validation
     //
@@ -201,13 +219,20 @@ router.post('/pizza/:pizzaId/topping', (req, res) => {
 
     if (topping.hasOwnProperty('name') &&
         topping.hasOwnProperty('price') &&
-        typeof(topping.price) == 'number') {
-          topping.id = toppingList[index].length + 1;
+        typeof(topping.price) == 'number' &&
+        (topping.price > 0)) {
+
+          if (!(topping.hasOwnProperty('id') && typeof(topping.id) == 'number'
+              && !(isIdExists(topping.id, toppingList)))) {
+            topping.id = toppingID;
+            toppingID += 1;
+          }
 
           toppingList[index].push(topping);
+          pizzaList[index].price += topping.price;
 
           // Set location in the header
-          res.location(req.headers.host + req.url + '/' + topping.id);
+          res.location(req.headers.host + '/v1' + req.url + topping.id);
           res.status(201).send('Created new Topping for pizza');
     } else {
       // parameter missing
@@ -240,7 +265,7 @@ router.get('/pizza/:pizzaId/topping', (req, res) => {
     } else {
       var idList = [];
 
-      for (var i = 0; i < toppingList.length; i++) {
+      for (var i = 0; i < toppingList[index].length; i++) {
         idList.push(toppingList[index][i].id);
       }
 
@@ -308,6 +333,7 @@ router.delete('/pizza/:pizzaId/topping/:toppingId', (req, res) => {
     for (var i = 0; i < toppingList[index].length; i++) {
       if (toppingList[index][i].id == req.params.toppingId) {
         isToppingFound = true;
+        pizzaList[index].price -= toppingList[index][i].price;
 
         // Delete topping
         toppingList[index].splice(i, 1);
@@ -340,9 +366,12 @@ router.post('/order', (req, res) => {
       order.hasOwnProperty('recipient') &&
       /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(order.recipient)) {
 
-        // assign ID
-        order.id = orderID;
-        orderID += 1;
+        if (!(order.hasOwnProperty('id') && typeof(order.id) == 'number'
+            && !(isIdExists(order.id, orderList)))) {
+          // assign ID
+          order.id = orderID;
+          orderID += 1;
+        }
 
         // Calculat total price
         order.totalPrice = 0;
@@ -365,10 +394,6 @@ router.post('/order', (req, res) => {
             var pizzaPrice = 0;
             pizzaPrice += pizzaList[index].price;
 
-            for (var j = 0; j < toppingList[index].length; j++) {
-              pizzaPrice += toppingList[index][j].price;
-            }
-
             if (order.orderItems[i].hasOwnProperty('quantity')) {
               order.totalPrice += (pizzaPrice * order.orderItems[i].quantity);
             } else {
@@ -382,7 +407,7 @@ router.post('/order', (req, res) => {
           orderList.push(order);
 
           // Set location in the header
-          res.location(req.headers.host + req.url + '/' + order.id);
+          res.location(req.headers.host + '/v1' + req.url + order.id);
           res.status(201).send('Created new order');
         } else {
           // parameter invalid
